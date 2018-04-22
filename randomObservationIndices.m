@@ -14,14 +14,13 @@ if(observationRate >= 1)
     indices = ones(m,n);
     fprintf('Observation rate >= 1. You are observaing all entries.\n');
 else
-
-indices = zeros(m,n);
-while(sum(sum(indices)) < m*n*observationRate)
-    i = randi([1 m],1);
-    j = randi([1 n],1);
-    if indices(i,j) == 0
-        indices(i,j) = 1;
+    indices = zeros(m,n);
+    while(sum(sum(indices)) < m*n*observationRate)
+        i = randi([1 m],1);
+        j = randi([1 n],1);
+        if indices(i,j) == 0
+            indices(i,j) = 1;
+        end
     end
-end
 end
 

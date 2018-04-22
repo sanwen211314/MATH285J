@@ -1,18 +1,19 @@
-clear; tStart = tic;
+clear; close all; tStart = tic;
 
-%matrix size and rank
-m = 20; n = 20; r = 3;
-
-% correlation parameters
-% this will make the first 't' number of columns pairwise correlated 
-% with expected correlation rho
+%matrix size and correlation parameter
+m = 20; n = 20;
 t = round(n/2);
-rho = 0.6;
-corrMat = rho*ones(t,t) + (1-rho)*eye(t,t);
-U = chol(corrMat);
 
-% observation rate
-observationRate = 0.5;
+%create random matrix, make first t columns scalar multiples of a single
+%vector
+M = rand(m,n);
+M(:,1:t) = (3/2)*rand(m,1)*rand(1,t);
+Mbar = M(:,1:t) + (0.5*rand(m,t)-0.25);
+
+% what proportion of entries do we observe?
+observationRate = 0.2;
+a = 0;
+gamma = 1;
 
 % run the matrix completion problem 'numTrials' number of times
 % At the end, we will calculate the 'averageError' in the solution
@@ -21,43 +22,69 @@ observationRate = 0.5;
 count = 0;
 tol = 1e-5;
 averageError = 0;
-numTrials = 1000;
-
-%proportion of observations from first 't' rows:
-%   If a = 0.5 and t = n/2, we are just sampling uniformly
-%   so we are back in the 'non-adaptive' case
-a = 0.5;
+numTrials = 10;
+minDiff = Inf;
 
 for trial = 1:numTrials
-    %Generate a random, relatively sparse matix of the desired rank
-    % then correlate the first half of the rows
-    A = randomSparseMat(m,n,r,0.3,0.3);
-    A(:,1:t) = A(:,1:t)*U;
-    
     %   Generate a set of random observation indices
-    indices1 = randomObservationIndices(m,t,2*observationRate*a);
-    indices2 = randomObservationIndices(m,n-t,2*observationRate*(1-a));
+    indices1 = randomObservationIndices(m,t,(n/t)*observationRate*a);
+    indices2 = randomObservationIndices(m,n-t,(n/(n-t))*observationRate*(1-a));
     indices = [indices1,indices2];
     
     cvx_begin quiet
         variable X(m,n)
-        %minimize the nuclear norm
-        minimize( norm_nuc(X) )
+        minimize( norm_nuc(X)+gamma*sum(sum((Mbar-X(:,1:10)).^2)))
         subject to
             %require the solution to match at the observed indices
-            X(indices==1) == A(indices==1)
+            X(indices==1) == M(indices==1)
     cvx_end
     
-    diff = norm(A - X,2);
+    diff = norm(M - X,2);
     if(diff < tol)
        count = count + 1; 
+    end
+    if(diff < minDiff)
+       minDiff = diff;
+       Xbest = X;
+       IndBest = indices;
     end
     averageError = averageError + diff;
 end
 averageError = averageError/numTrials;
 
-fprintf('Proportion of observations from first group: %.2f\n',a);
-fprintf('Number of solutions within %.0e: %i\n',tol,count);
-fprintf('Average error: %.4f\n',averageError);
+fprintf('Proportion of observations from correlated columns: %.2f\n',a);
+fprintf('Average relative error: %.4f\n',averageError);
 tElapsed = toc(tStart);
 fprintf('Time elapsed: %.2f sec\n',tElapsed);
+
+
+a = (1:20) - 0.5; b = a;
+hFig = figure(110);clf;
+set(hFig,'Position',[0 350 1600 400]);
+subplot(1,3,1);
+surf(a,b,M); view([0,90]);
+axis([0.5 19.5 0.5 19.5]);
+xticks([]);
+xticklabels([]);
+yticks([]);
+yticklabels([]);
+caxis([0,max(max(M))]);
+title('Original Matrix')
+subplot(1,3,2);
+surf(a,b,Xbest); view([0,90]);
+axis([0.5 19.5 0.5 19.5]);
+xticks([]);
+xticklabels([]);
+yticks([]);
+yticklabels([]);
+str = sprintf('Best Reconstruction, ||X - M|| = %.2e',minDiff);
+title(str)
+caxis([0,max(max(M))]);
+subplot(1,3,3);
+surf(a,b,indices);view([0,90]);
+axis([0.5 19.5 0.5 19.5]);
+xticks([]);
+xticklabels([]);
+yticks([]);
+yticklabels([]);
+title('Observation Indices (yellow)');
