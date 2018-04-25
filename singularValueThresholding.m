@@ -5,6 +5,8 @@ M = 2*randomSparseMat(m,n,10)-1;
 
 minMSE = Inf;
 numTrials = 20;
+fprintf('Number of trials: %i\n',numTrials);
+fprintf('Trials completed: ');
 for l = 1:numTrials
     %X_ij is a normal r.v. with mean M_ij and variance sigma^2
     sigma = 0.5;
