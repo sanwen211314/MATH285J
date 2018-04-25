@@ -1,9 +1,7 @@
 clear; close all;
 
 m=500; n=500;
-M = randomSparseMat(m,n,10);
-M = M/(max(max(M))); %rescale so entries are in [0,1]
-
+M = 2*randomSparseMat(m,n,10)-1;
 
 minMSE = Inf;
 numTrials = 20;
