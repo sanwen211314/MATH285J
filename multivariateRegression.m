@@ -7,7 +7,8 @@ t = 10;
 %create random matrix, make first t columns scalar multiples of a single
 %vector
 M = rand(m,n);
-M(:,1:t) = (3/2)*rand(m,1)*rand(1,t);
+coeffVector = rand(1,t);
+M(:,1:t) = (3/2)*rand(m,1)*coeffVector;
 
 % what proportion of entries do we observe?
 observationRate = 0.2;
@@ -81,12 +82,12 @@ tElapsed = toc(tStart);
 fprintf('Time elapsed: %.2f sec\n',tElapsed);
 
 
-a = (1:m) - 0.5; b = (1:n)-0.5;
+A = (1:m) - 0.5; B = (1:n)-0.5;
 hFig = figure(110);clf;
 set(hFig,'Position',[0 350 1600 400]);
 subplot(1,3,1);
-surf(a,b,M); view([0,90]);
-axis([min(a) max(a) min(b) max(b)]);
+surf(A,B,M); view([0,90]);
+axis([min(A) max(A) min(B) max(B)]);
 xticks([]);
 xticklabels([]);
 yticks([]);
@@ -94,8 +95,8 @@ yticklabels([]);
 caxis([0,max(max(M))]);
 title('Original Matrix')
 subplot(1,3,2);
-surf(a,b,Xbest); view([0,90]);
-axis([min(a) max(a) min(b) max(b)]);
+surf(A,B,Xbest); view([0,90]);
+axis([min(A) max(A) min(B) max(B)]);
 xticks([]);
 xticklabels([]);
 yticks([]);
@@ -104,8 +105,8 @@ str = sprintf('Best Reconstruction, ||X - M|| = %.2e',minDiff);
 title(str)
 caxis([0,max(max(M))]);
 subplot(1,3,3);
-surf(a,b,indices);view([0,90]);
-axis([min(a) max(a) min(b) max(b)]);
+surf(A,B,indices);view([0,90]);
+axis([min(A) max(A) min(B) max(B)]);
 xticks([]);
 xticklabels([]);
 yticks([]);
