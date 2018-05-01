@@ -1,7 +1,7 @@
 clear; close all; tStart = tic;
 
 %matrix size and correlation parameter
-m = 100; n = 100;
+m = 200; n = 200;
 t = 10;
 
 %create random matrix, make first t columns scalar multiples of a single
@@ -21,36 +21,37 @@ gamma = 1;
 count = 0;
 tol = 1e-5;
 averageError = 0;
-numTrials = 1;
+numTrials = 10;
 minDiff = Inf;
 
-for trial = 1:numTrials
-    %   Generate a set of ordered, observation indices for the correlated
-    % columns.
-    indices1 = zeros(m,t);
-    for numRows=1:m
-        try
-            indices1(1:numRows,:) = 1;
-            indvar = [ones(size(M(1:numRows,1))) M(1:numRows,1)];
-            b = mvregress(indvar, M(1:numRows,2:t));
-            disp("The number of samples needed to obtain a positive-definite covariance:");
-            numRows * t
-            constraintBuilder = "";
-            for row=2:t
-                constraintBuilder = constraintBuilder + sprintf("X(:,%d) == X(:,1) .* b(2,%d) + b(1,%d)\n", row,row-1,row-1);
-            end
-            constraintBuilder
-            break
-        catch
+%   Generate a set of ordered, observation indices for the correlated
+% columns.
+indices1 = zeros(m,t);
+for numRows=1:m
+    try
+        indices1(1:numRows,:) = 1;
+        indvar = [ones(size(M(1:numRows,1))) M(1:numRows,1)];
+        b = mvregress(indvar, M(1:numRows,2:t));
+        disp("The number of samples needed to obtain a positive-definite covariance:");
+        numRows * t
+        constraintBuilder = "";
+        for row=2:t
+            constraintBuilder = constraintBuilder + sprintf("X(:,%d) == X(:,1) .* b(2,%d) + b(1,%d)\n", row,row-1,row-1);
         end
+        constraintBuilder
+        break
+    catch
     end
+end
+% indices1(:,1) = 1;
+disp("Proportion of observations from non-correlated columns")
+(observationRate-(nnz(indices1)/(m*n)))/observationRate
+
+for trial = 1:numTrials
     
     %   Generate a set of random observation indices
-    disp("Proportion of observations from non-correlated columns")
-    (observationRate-(numRows*t/(m*n)))/observationRate
-    indices2 = randomObservationIndices(m,n-t,max(0, observationRate-(numRows*t/(m*n))));
+    indices2 = randomObservationIndices(m,n,max(0, observationRate-(nnz(indices1)/(m*n))), t);
     indices = [indices1,indices2];
-    
     cvx_begin quiet
         variable X(m,n)
         minimize(norm_nuc(X))
@@ -76,7 +77,7 @@ for trial = 1:numTrials
 end
 averageError = averageError/numTrials;
 
-fprintf('Proportion of observations from correlated columns: %.2f\n',1 - ((observationRate-(numRows*t/(m*n)))/observationRate));
+fprintf('Proportion of observations from correlated columns: %.2f\n',1 - ((observationRate-(nnz(indices1)/(m*n)))/observationRate));
 fprintf('Average relative error: %.4f\n',averageError);
 tElapsed = toc(tStart);
 fprintf('Time elapsed: %.2f sec\n',tElapsed);
