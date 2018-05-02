@@ -1,7 +1,7 @@
 clear; close all; tStart = tic;
 
 %matrix size and correlation parameter
-m = 200; n = 200;
+m = 100; n = 100;
 t = 10;
 
 %create random matrix, make first t columns scalar multiples of a single
@@ -32,7 +32,7 @@ for trial = 1:numTrials
         subject to
             X(indices==1) == M(indices==1)
     cvx_end
-    diff = norm(M - X,2);
+    diff = norm(M - X,2)/norm(M,2);
     if(diff < tol)
        count = count + 1; 
     end
@@ -69,7 +69,7 @@ xticks([]);
 xticklabels([]);
 yticks([]);
 yticklabels([]);
-str = sprintf('Best Reconstruction, ||X - M|| = %.2e',minDiff);
+str = sprintf('Best Reconstruction, ||X - M||/||M|| = %.2e',minDiff);
 title(str)
 caxis([0,max(max(M))]);
 subplot(1,3,3);
