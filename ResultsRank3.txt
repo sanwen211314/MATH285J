@@ -1,0 +1,61 @@
+------- NON-ADAPTIVE SAMPLE -------
+Number of trials: 500
+Average relative error: 0.2650
+Best relative error: 0.2032
+Time elapsed: 130.27 sec
+------- ADAPTIVE SAMPLE -------
+Proportion of observations from correlated columns: 0.28
+Gamma: 0.55
+Number of trials: 500
+Average relative error: 0.2530
+Best relative error: 0.1891
+Time elapsed: 194.19 sec
+-------------------------------
+------- ADAPTIVE SAMPLE -------
+Proportion of observations from correlated columns: 0.29
+Gamma: 0.60
+Number of trials: 500
+Average relative error: 0.2535
+Best relative error: 0.1835
+Time elapsed: 232.28 sec
+-------------------------------
+------- ADAPTIVE SAMPLE -------
+Proportion of observations from correlated columns: 0.31
+Gamma: 0.65
+Number of trials: 500
+Average relative error: 0.2538
+Best relative error: 0.1912
+Time elapsed: 249.47 sec
+-------------------------------
+------- ADAPTIVE SAMPLE -------
+Proportion of observations from correlated columns: 0.32
+Gamma: 0.70
+Number of trials: 500
+Average relative error: 0.2586
+Best relative error: 0.1891
+Time elapsed: 235.01 sec
+-------------------------------
+------- ADAPTIVE SAMPLE -------
+Proportion of observations from correlated columns: 0.34
+Gamma: 0.75
+Number of trials: 500
+Average relative error: 0.2621
+Best relative error: 0.1951
+Time elapsed: 250.02 sec
+-------------------------------
+------- ADAPTIVE SAMPLE -------
+Proportion of observations from correlated columns: 0.35
+Gamma: 0.80
+Number of trials: 500
+Average relative error: 0.2634
+Best relative error: 0.1939
+Time elapsed: 189.23 sec
+-------------------------------
+------- ADAPTIVE SAMPLE -------
+Proportion of observations from correlated columns: 0.37
+Gamma: 0.85
+Number of trials: 500
+Average relative error: 0.2629
+Best relative error: 0.2003
+Time elapsed: 266.42 sec
+-------------------------------
