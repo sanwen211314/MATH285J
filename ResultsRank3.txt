@@ -1,8 +1,9 @@
-------- NON-ADAPTIVE SAMPLE -------
+------- NON-ADAPTIVE SAMPLE ---
 Number of trials: 500
 Average relative error: 0.2650
 Best relative error: 0.2032
 Time elapsed: 130.27 sec
+-------------------------------
 ------- ADAPTIVE SAMPLE -------
 Proportion of observations from correlated columns: 0.28
 Gamma: 0.55
