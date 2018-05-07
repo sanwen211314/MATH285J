@@ -3,6 +3,7 @@
 \usepackage[top=1 in, bottom=1 in, left=1 in, right = 1 in]{geometry}
 \usepackage{amsmath}
 \usepackage{amsthm}
+\usepackage{wasysym}
 \usepackage{amssymb}
 \usepackage{graphicx}
 
@@ -44,7 +45,7 @@ We want to consider matrices with certain columns correlated. As a first attempt
   
 \noindent\makebox[\linewidth]{\rule{\textwidth}{2pt}} 
   
- We tried to think of  ways to incorporate the correlation into the problem. A first thought might be to change the functional to incorporate the correlation matrix itself, perhaps: $$\min \| X \|_* + \gamma \| \Corr(X_\tau) + \Corr(M_\tau)\|^2_F \,\,\,\, \text{subject to} \,\,\,\, P_\Omega(X) = P_{\Omega}(M)$$ where $\tau$ represents the collection of columns that are known to be correlated. However, the map $X\mapsto \Corr(X)$ is non-linear and so that map $X\mapsto \| \Corr(X_\tau) - \Corr(M_\tau)\|_F^2$ is non-convex. If we wanted to do this, we would need some more sophisticated non-convex optimization routines. Instead, it may be better to use some portion of the samples to produce an estimation $\tilde M_\tau$ to $M_\tau$ and then insert a fidelity term in order to match $X_\tau$ to $\tilde M_\tau$ and combine this with nuclear norm minimization: $$\min \| X \|_* + \gamma \| X_\tau + \tilde M_\tau\|^2_F \,\,\,\, \text{subject to} \,\,\,\, P_\Omega(X) = P_{\Omega}(M).$$ This idea shows some promise. Indeed assuming we can produce $\tilde M_\tau$ with some amount of accuracy, we can sample at a much lower rate from the correlated columns since they are accounted for by the fidelity term. Indeed, we did a small parameter sweep and it suggested that taking $\tilde \gamma =1$ and taking all the samples from the uncorrelated columns is ideal (here we assume we have used 40 samples to construct $\tilde M_\tau$ and then take the remaining $80$ samples from the uncorrelated portion). 
+ We tried to think of  ways to incorporate the correlation into the problem. A first thought might be to change the functional to incorporate the correlation matrix itself, perhaps: $$\min \| X \|_* + \gamma \| \Corr(X_\tau) - \Corr(M_\tau)\|^2_F \,\,\,\, \text{subject to} \,\,\,\, P_\Omega(X) = P_{\Omega}(M)$$ where $\tau$ represents the collection of columns that are known to be correlated. However, the map $X\mapsto \Corr(X)$ is non-linear and so that map $X\mapsto \| \Corr(X_\tau) - \Corr(M_\tau)\|_F^2$ is non-convex. If we wanted to do this, we would need some more sophisticated non-convex optimization routines. Instead, it may be better to use some portion of the samples to produce an estimation $\tilde M_\tau$ to $M_\tau$ and then insert a fidelity term in order to match $X_\tau$ to $\tilde M_\tau$ and combine this with nuclear norm minimization: $$\min \| X \|_* + \gamma \| X_\tau - \tilde M_\tau\|^2_F \,\,\,\, \text{subject to} \,\,\,\, P_\Omega(X) = P_{\Omega}(M).$$ This idea shows some promise. Indeed assuming we can produce $\tilde M_\tau$ with some amount of accuracy, we can sample at a much lower rate from the correlated columns since they are accounted for by the fidelity term. Indeed, we did a small parameter sweep and it suggested that taking $\tilde \gamma =1$ and taking all the samples from the uncorrelated columns is ideal (here we assume we have used 40 samples to construct $\tilde M_\tau$ and then take the remaining $80$ samples from the uncorrelated portion). 
  
   \begin{center}
 \includegraphics[width=\textwidth]{selectSample1.png}\\
@@ -75,6 +76,107 @@ Otherwise, we may be able to use multivariate regression to identify the correla
 Our preliminary results are shown above for a 200 x 200 matrix, with 10 trials for each method. As we can see, adaptive sampling (the top one) improves the reconstruction error from 1.53e+01 to 1.42e+01 in comparison to the random sampling method. Also, the red rectangle in the adaptive sampling method highlights how most of the correlated columns remains unobserved.
 
 We can always decrease the reconstruction error in the correlated columns by sampling more from the correlated columns to obtain a better estimate for the correlation. Next, we need to loosen the assumption that we know which rows/columns are correlated, and see if we can learn this as we sample. For example, we could sample coarsely and obtain a rough estimation. Then we could examine the correlation pattern from the estimation and adjust the sampling scheme accordingly, then repeat. Even further down the road, we can loosen the assumption that the correlations are linear.
+
+\noindent\makebox[\linewidth]{\rule{\textwidth}{2pt}} 
+
+Rather than use the multivariate regression, if we know that the correlated columns are low rank, we can use random sampling to try to explicitly determine their relationship. We formulate this idea mathematically. Given $M \in \mathbb R^{m\times n}$ with columns $\vec m_1, \ldots, \vec m_n$, suppose that $\tau \subset [n]$ with $t := \lvert \tau \rvert \ll n$ and let $M_\tau \in \mathbb R^{m\times t}$ be the matrix whose columns are $\vec m_{j}$ for $j \in \tau$. Further, suppose we know that $M_\tau$ is low rank, i.e. $\text{rank}(M_\tau) = k < t$. 
+
+Our goal is to find a colletion of $k$ columns of $M_\tau$ (we call this collection $M^{(k)}_\tau = [\vec m_{j_1} \, \cdots \, \vec m_{j_k}]$) and a matrix $B \in \mathbb R^{k \times (t-k)}$ such that \begin{equation} \label{eq:Mtau} \tag{\hexstar}M_\tau = M_{\tau}^{(k)}B.\end{equation} That is, we want to extract $k$ columns which form a basis for the column space of $M_\tau$ and we want to find the coordinates of the other columns of $M_\tau$ in this basis.
+
+The question is how to find $M^{(k)}_{\tau}$ and $B$ while observing as little of $M_\tau$ as possible. Notice, equation \eqref{eq:Mtau} is really $t-k$ vector equations: $$\vec m_\ell = b_{j_1,\ell} \vec m_{j_1} + b_{j_2,\ell} \vec m_{j_2} + \cdots + b_{j_k,\ell} \vec m_{j_k}, \,\,\,\,\, \text{ for } \ell \in \tau \setminus \{j_1, \ldots, j_k \}.$$ However, these vectors live in $\mathbb R^m$ while there are only $k$ basis vectors. Thus we do not actually need these entire equations; rather, if we can extract a $k\times k$ submatrix from $M^{(k)}_\tau$ then we can solve for all the coefficients in $B$ with only $k^2$ observations. Unfortunately, knowing nothing about the specific entries of $M_\tau$, the best we can do is to randomly sample a $k \times k$ submatrix. If it is invertible, then great, we have our $M^{(k)}_\tau$ and we can solve for $B$. If it isn't invertible, we can keep those observations, but we need to re-sample to find an invertible $k\times k$ matrix. However, so long as $M$ is defined somewhat randomly and isn't sparse, a random $k\times k$ submatrix will be invertible with high probability (in fact, we test this with the first $t$ columns of $M$ defined by $XY$ where $ X \in \mathbb R^{m\times k}$ and $Y \in \mathbb R^{k\times t}$ have entries that our uniform $[0,1]$ and thus a random $k\times k$ submatrix of $M_\tau$ will be invertible almost surely). 
+
+To summarize, our algorithm is: 
+\begin{enumerate}
+\item Randomly sample $I = \{i_1,\ldots, i_k\} \subset [m]$ and $J = \{j_1,\ldots, j_k\} \subset \tau$. 
+\item If the matrix $(m_{ij})_{(i,j) \in I\times J}$ is invertible, then 
+\begin{enumerate} 
+\item Define $M^{(k)}_\tau = [\vec m_{j_1} \, \cdots \, m_{j_k}]$
+\item Sample the remaining entries of the rows corresponding $i_1,\ldots, i_k$
+\item Solve for $B$ using \eqref{eq:Mtau}
+\item Break loop
+\end{enumerate}
+\item If you reach this step, save the already observed entries and return to step 1.
+\end{enumerate}
+
+Assuming that $\tau = [t]$ (so that the first $t$ columns are the correlated ones), this algorithm in MATLAB looks like: 
+
+\noindent \texttt{indices1 = zeros(m,t);}\\
+\texttt{DET = 0;}\\
+\texttt{while DET == 0}\\
+$\frac{}{}$\hspace{1cm}    \texttt{I = randperm(m,k);}\\
+$\frac{}{}$\hspace{1cm}    \texttt{J = randperm(t,k);}\\
+$\frac{}{}$\hspace{1cm}    \texttt{DET = det(M(I,J));}\\
+$\frac{}{}$\hspace{1cm}    \texttt{indices1(i,j) = 1;}\\
+\texttt{end}\\
+\texttt{J1 = setdiff(1:t,j);}\\
+\texttt{indices1(I,J1) = 1;}\\
+\texttt{B = M(I,J) \textbackslash \, M(I,J1);}\\
+
+\noindent where \texttt{indices1} is keeping track of the observed entries.
+
+Using this, we will explicitly find the relationship between the correlated columns. From here we can do one of two things. First option: we can use the relationship $M_\tau = M^{(k)}_\tau B$ as a constraint in the minimization problem and proceed as before. In this case, our problem becomes $$\min \| X \|_* \,\, \text{ subject to } P_{\Omega}(X) = P_{\Omega}(M) \,\, \text{ and } \,\, X_\tau = X^{(k)}_\tau B.$$ Here $\Omega$ would no longer be a random sampling of the entries because it would include the entries we sampled in finding $B$. Also, we could choose to selectively sample more or less in the correlated columns (that is, there may be some advantage to selectively constructing $\Omega$ rather than using the remaining observations randomly). 
+
+Otherwise, we could do the problem in two steps. We could first sample some entries $\Omega_\tau$ of $M_\tau$ and solve $$\min \| Y \|_* \,\, \text{ subject to } P_{\Omega_\tau}(Y) = P_{\Omega_\tau}(M_\tau) \,\, \text{ and } Y = Y^{(k)}B.$$ The solution $\tilde Y$ to this problem will be an approximation to $M_\tau$ (and it should be a very good approximation) so we can use it as a fidelity term in the next step and solve $$\min \| X \|_* + \gamma \| X_\tau - \tilde Y \|_F^2 \,\, \text{ subject to } P_{\Omega}(X) = P_{\Omega}(M)$$ where $\Omega$ again is a set of observations which could be selectively designed.  In this case $X_\tau$ would not carry the exact same correlation pattern as $M_\tau$ but it should be fairly close.
+
+Thus far, we have only taken the first approach: enforcing the relationship as a constraint in the problem. We are showing some accuracy gains in doing this. The following is a $30 \times 30$ example where the first $10$ columns form a rank $3$ matrix. We show both our approach and the vanilla nuclear norm minimization approach. Notice that our approach does a bit better, both in average relative error (over 100 trials) and in best relative error. Also notice that in this case, we aren't doing anything special with $\Omega$. While using our approach, we are still taking roughly $1/3$ of the observations from to correlated columns (which is uniform sampling since these columns take up 1/3 of the matrix) - after having selectively samples a few entire rows in order to solve for $B$.  One interesting feature of our approach is that, since we perfectly resolve the linear relationship between the correlated columns which is determined by $k$ variables, if we sample $k$ entries from a single row in $M_\tau$, then we perfectly reconstruct that row (notice the row circled in red below - this is not one of the rows which we sample in its entirety, but because there happen to have been more than three observations in that row, it is perfectly reconstructed).
+
+  \begin{center}
+\includegraphics[width=1\textwidth]{adaptSample1.png}\\
+\end{center}  
+
+------- ADAPTIVE SAMPLE -------
+
+Proportion of observations from correlated columns: 0.34
+
+Number of trials: 100
+
+Average relative error: 0.2598
+
+Best relative error: 0.1965
+
+  \begin{center}
+\includegraphics[width=1\textwidth]{nonAdaptSample1.png}\\
+\end{center}  
+
+------- NON-ADAPTIVE SAMPLE ---
+
+Number of trials: 100
+
+Average relative error: 0.2638
+
+Best relative error: 0.2063\\
+
+Currently, we are running a parameter sweep to find the best way to selectively design $\Omega$. That is, once we have solved for $B$, we are trying to find the best proportion of the remaining observations which should be taken from $M_\tau$ versus $M_{[n]\setminus \tau}$. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
  
  
